@@ -40,7 +40,7 @@ login_manager.login_view = 'login'
 class User(db.Model, UserMixin):  # Inherit from UserMixin
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     budget = db.Column(db.Float, default=0.0)
 
 class Expense(db.Model):
@@ -204,3 +204,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
