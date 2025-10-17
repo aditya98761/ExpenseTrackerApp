@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card card-sm fade-in">
+            <h1>Create Account</h1>
+            <p style="text-align: center; margin-bottom: 2rem;">Join us and start managing your finances smarter</p>
+            
+            <form action="{{ url_for('register') }}" method="post">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    <label for="username">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: inline; margin-right: 0.5rem;">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        Username
+                    </label>
+                    {{ form.username(size=32, placeholder="Choose a username (min 3 characters)") }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: inline; margin-right: 0.5rem;">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Password
+                    </label>
+                    {{ form.password(size=32, placeholder="Create a secure password (min 6 characters)") }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: inline; margin-right: 0.5rem;">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Confirm Password
+                    </label>
+                    {{ form.confirm_password(size=32, placeholder="Confirm your password") }}
+                </div>
+                
+                {{ form.submit(class="btn btn-primary btn-full") }}
+            </form>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% endwith %}
+            
+            <p style="text-align: center; margin-top: 2rem; color: var(--text-secondary);">
+                Already have an account? 
+                <a href="{{ url_for('login') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                    Sign in here
+                </a>
+            </p>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

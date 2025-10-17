@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense - Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="{{ url_for('dashboard') }}" class="nav-brand">
+            💰 Expense Tracker
+        </a>
+        <div class="nav-links">
+            <span class="nav-link">Welcome, {{ current_user.username }}!</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                </svg>
+                Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card card-sm fade-in">
+            <h1>
+                <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24" style="display: inline; margin-right: 0.5rem;">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add New Expense
+            </h1>
+            <p style="text-align: center; margin-bottom: 2rem; color: var(--text-secondary);">
+                Track a new expense to keep your finances organized
+            </p>
+            
+            <form method="POST" action="{{ url_for('add_expense') }}">
+                <div class="form-group">
+                    <label for="amount">
+                        
+                       Rs Amount
+                    </label>
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00" min="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: inline; margin-right: 0.5rem;">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                        Description
+                    </label>
+                    <textarea name="description" required placeholder="What did you spend money on?"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Add Expense
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
