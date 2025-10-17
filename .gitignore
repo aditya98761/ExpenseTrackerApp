@@ -1,0 +1,15 @@
+# Virtual Environment
+/Scripts
+/Lib
+/Include
+/pyvenv.cfg
+
+# Local Database
+/instance
+
+# Python cache
+__pycache__/
+
+# Editor settings
+.vscode/
+settings.json
