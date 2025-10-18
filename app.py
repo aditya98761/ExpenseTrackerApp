@@ -184,6 +184,7 @@ def add_expense():
         )
         db.session.add(new_expense)
         db.session.commit()
+        print(f"DEBUG: Saving expense with receipt URL: {receipt_url}")
         flash("Expense added successfully!")
         return redirect(url_for('dashboard'))
     return render_template('add_expense.html')
@@ -232,6 +233,7 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
