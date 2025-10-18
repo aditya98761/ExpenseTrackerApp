@@ -6,33 +6,31 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, FloatField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
-from azure.storage.blob import BlobServiceClient
-from werkzeug.utils import secure_filename
 import os
 import urllib
 import uuid
-
+from azure.storage.blob import BlobServiceClient
+from werkzeug.utils import secure_filename
 
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# === START: NEW DATABASE CONFIGURATION ===
-# Get the connection string from an environment variable
+# === DATABASE CONFIGURATION ===
 connection_string = os.environ.get("AZURE_SQL_CONNECTION_STRING")
 
-# If the connection string is found, use Azure SQL. Otherwise, use local SQLite.
 if connection_string:
     print("✅ Production mode: Using Azure SQL Database.")
     params = urllib.parse.quote_plus(connection_string)
     app.config['SQLALCHEMY_DATABASE_URI'] = "mssql+pyodbc:///?odbc_connect=%s" % params
 else:
-    print("⚠️ Development mode: AZURE_SQL_CONNECTION_STRING not found. Using local SQLite.")
+    print("⚠️ Development mode: Using local SQLite.")
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-# === END: NEW DATABASE CONFIGURATION ===
+# === END DATABASE CONFIGURATION ===
+
 
 # Configure Flask-Login
 login_manager = LoginManager()
@@ -40,10 +38,10 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # Models
-class User(db.Model, UserMixin):  # Inherit from UserMixin
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(256), nullable=False)
+    password = db.Column(db.String(256), nullable=False) # Increased size
     budget = db.Column(db.Float, default=0.0)
 
 class Expense(db.Model):
@@ -52,9 +50,9 @@ class Expense(db.Model):
     amount = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(200), nullable=True)
     date = db.Column(db.Date, default=datetime.utcnow)
-    receipt_url = db.Column(db.String(512), nullable=True)  # Use snake_case for all file-related fields
+    receipt_url = db.Column(db.String(512), nullable=True) # Receipt URL column
 
-# Forms
+# Forms (Omitted for brevity, your existing forms are fine)
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=80)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
@@ -66,30 +64,30 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
-# User loader for Flask-Login
+# User loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Routes
+# --- ROUTES ---
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
+# (register, login, logout routes are fine)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:  # Redirect logged-in users to the dashboard
+    if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        # Check if the username already exists
         existing_user = User.query.filter_by(username=form.username.data).first()
         if existing_user:
             flash("Username already exists. Please choose another.", "error")
             return redirect(url_for('register'))
 
-        # Create a new user
         hashed_password = generate_password_hash(form.password.data)
         new_user = User(username=form.username.data, password=hashed_password)
         db.session.add(new_user)
@@ -102,7 +100,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:  # If already logged in, redirect to the dashboard
+    if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
     form = LoginForm()
@@ -124,24 +122,15 @@ def logout():
     flash("You have been logged out.")
     return redirect(url_for('home'))
 
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Fetch user's expenses
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
-    
-    # Calculate the total expense for the user
     total_expense = sum(expense.amount for expense in expenses)
+    return render_template('dashboard.html', expenses=expenses, total_expense=total_expense)
 
-    return render_template(
-        'dashboard.html',
-        expenses=expenses,
-        total_expense=total_expense
-    )
-
-connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-container_name = "receipts" # Name of your container
-
+# --- START: CORRECTED ADD_EXPENSE FUNCTION ---
 @app.route('/add_expense', methods=['GET', 'POST'])
 @login_required
 def add_expense():
@@ -150,32 +139,42 @@ def add_expense():
         description = request.form['description']
         receipt_file = request.files.get('receipt')
         receipt_url = None
-        # Check if a file was uploaded and has a filename
+
         if receipt_file and receipt_file.filename:
+            print("DEBUG: File detected. Starting upload process...")
             try:
-                # Secure the original filename and get its extension
-                original_filename = secure_filename(receipt_file.filename)
-                file_extension = os.path.splitext(original_filename)[1]
-                # Generate a unique filename using UUID to prevent conflicts
-                unique_filename = str(uuid.uuid4()) + file_extension
-                # Get the connection string from your App Service configuration
                 connect_str = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
-                container_name = "receipts" # IMPORTANT: Create a container with this name
+                container_name = "receipts"
+
                 if not connect_str:
+                    print("DEBUG ERROR: AZURE_STORAGE_CONNECTION_STRING is not set!")
                     flash("Storage is not configured on the server.", "error")
                     return redirect(url_for('dashboard'))
-                # Connect to blob service
+
+                print("DEBUG: Connection string found. Creating BlobServiceClient...")
                 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+                
+                original_filename = secure_filename(receipt_file.filename)
+                file_extension = os.path.splitext(original_filename)[1]
+                unique_filename = str(uuid.uuid4()) + file_extension
+                
+                print(f"DEBUG: Generated unique filename: {unique_filename}")
                 blob_client = blob_service_client.get_blob_client(
                     container=container_name, blob=unique_filename
                 )
-                # Upload the file and get its URL
+
+                print("DEBUG: Attempting to upload blob...")
                 blob_client.upload_blob(receipt_file)
                 receipt_url = blob_client.url
+                print(f"DEBUG: Upload successful! URL is {receipt_url}")
+
             except Exception as e:
-                flash(f"An error occurred during file upload: {e}", "error")
+                print("--- DEBUG: UPLOAD FAILED ---")
+                print(f"An unexpected error occurred: {e}")
+                print("-----------------------------")
+                flash("A critical error occurred during file upload. Please check server logs.", "error")
                 return redirect(url_for('dashboard'))
-        # Create the expense with the receipt URL (which is None if no file was uploaded)
+
         new_expense = Expense(
             user_id=current_user.id,
             amount=amount,
@@ -183,11 +182,14 @@ def add_expense():
             receipt_url=receipt_url
         )
         db.session.add(new_expense)
-        db.session.commit()
         print(f"DEBUG: Saving expense with receipt URL: {receipt_url}")
+        db.session.commit()
         flash("Expense added successfully!")
         return redirect(url_for('dashboard'))
+        
     return render_template('add_expense.html')
+# --- END: CORRECTED ADD_EXPENSE FUNCTION ---
+
 
 @app.route('/update_expense/<int:expense_id>', methods=['GET', 'POST'])
 @login_required
@@ -201,7 +203,7 @@ def update_expense(expense_id):
         return redirect(url_for('dashboard'))
     return render_template('update_expense.html', expense=expense)
 
-# New route for viewing expenses
+
 @app.route('/view_expenses')
 @login_required
 def view_expenses():
@@ -222,18 +224,9 @@ def delete_expense(expense_id):
     flash("Expense deleted successfully!")
     return redirect(url_for('dashboard'))
 
-
-
-# Initialize database
 with app.app_context():
     db.create_all()
     print("Database tables created!")
 
-
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
