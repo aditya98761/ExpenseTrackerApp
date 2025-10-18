@@ -95,26 +95,30 @@
                                 <th>Receipt</th> <th>Actions</th>
                             </tr>
                         </thead>
-                    <tbody>
-                        {% for expense in expenses %}
-                            <tr>
-                                <td>{{ expense.amount }}</td>
-                                <td>{{ expense.description }}</td>
-                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    {% if expense.receipt_url %}
-                                        <a href="{{ expense.receipt_url }}" target="_blank">View Receipt</a>
-                                    {% else %}
-                                        No Receipt
+                            <tbody>
+                                {% for expense in expenses %}
+                                    <tr>
+                                    <td>{{ expense.amount }}</td>
+                                    <td>{{ expense.description }}</td>
+                                    <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if expense.receipt_url %}
+                                            <a href="{{ expense.receipt_url }}" target="_blank">View Receipt</a>
+                                        {% else %}
+                                            No Receipt
                                         {% endif %}
-                                </td>
+                                    </td>
                                 <td>
-                             </td>
-                            </tr>
-                            {% endfor %}
-                    </tbody>
-                    </table>
-                </div>
+                                    <a href="{{ url_for('update_expense', expense_id=expense.id) }}">Edit</a>
+                                    <form action="{{ url_for('delete_expense', expense_id=expense.id) }}" method="post" style="display:inline;">
+                                    <button type="submit">Delete</button>
+                                </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 
                 {% if expenses|length > 10 %}
                     <div style="text-align: center; margin-top: 1rem;">
@@ -142,3 +146,4 @@
 </body>
 
 </html>
+
