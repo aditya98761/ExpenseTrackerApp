@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Make sure your styles.css is linked correctly -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -61,11 +60,7 @@
                     <div class="stat-card">
                         <div class="stat-value">
                             {% set total = expenses|sum(attribute='amount') %}
-                            {% if expenses|length > 0 %}
-                                Rs {{ "%.2f"|format(total / expenses|length) }}
-                            {% else %}
-                                Rs 0.00
-                            {% endif %}
+                            Rs {{ "%.2f"|format(total / expenses|length) }}
                         </div>
                         <div class="stat-label">Average per Transaction</div>
                     </div>
@@ -76,24 +71,47 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Amount</th>
-                                <th>Description</th>
                                 <th>Date</th>
-                                <th>Receipt</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for expense in expenses %}
                             <tr>
-                                <td>Rs {{ "%.2f"|format(expense.amount) }}</td>
-                                <td>{{ expense.description }}</td>
-                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
                                 <td>
-                                    {% if expense.receipt_url %}
-                                        <a href="{{ expense.receipt_url }}" target="_blank" class="btn btn-outline btn-sm">View Receipt</a>
-                                    {% else %}
-                                        No Receipt
-                                    {% endif %}
+                                    <div style="font-weight: 500;">{{ expense.date.strftime('%b %d, %Y') }}</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                        {{ expense.date.strftime('%A') }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 500;">{{ expense.description }}</div>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: var(--danger-color); font-size: 1.1rem;">
+                                        Rs {{ expense.amount }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="{{ url_for('update_expense', expense_id=expense.id) }}" 
+                                           class="btn btn-sm btn-secondary">
+                                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                            </svg>
+                                            Edit
+                                        </a>
+                                        <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
