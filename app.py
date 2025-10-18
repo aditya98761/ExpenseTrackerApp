@@ -141,8 +141,7 @@ def dashboard():
 
 connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
 container_name = "receipts" # Name of your container
-@app.route('/add_expense', methods=['GET', 'POST'])
-@login_required
+
 @app.route('/add_expense', methods=['GET', 'POST'])
 @login_required
 def add_expense():
@@ -233,5 +232,6 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
