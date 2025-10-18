@@ -111,7 +111,8 @@
                                     <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
                                     <td>
                                         {% if expense.receipt_url %}
-                                            <a href="{{ expense.receipt_url }}" target="_blank">View Receipt</a>
+                                            <a href="{{ expense.receipt_url }}" target="_blank"></a>
+                                            View Receipt
                                         {% else %}
                                             No Receipt
                                         {% endif %}
@@ -154,5 +155,6 @@
 </body>
 
 </html>
+
 
 
