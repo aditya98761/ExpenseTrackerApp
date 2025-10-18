@@ -74,6 +74,7 @@
                                 <th>Date</th>
                                 <th>Description</th>
                                 <th>Amount</th>
+                                <th>Receipt</th> 
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -93,6 +94,13 @@
                                     <span style="font-weight: 600; color: var(--danger-color); font-size: 1.1rem;">
                                         Rs {{ expense.amount }}
                                     </span>
+                                </td>
+                                <td>
+                                    {% if expense.receipt_url %}
+                                        <a href="{{ expense.receipt_url }}" target="_blank">View Receipt</a>
+                                    {% else %}
+                                        No Receipt
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
@@ -147,4 +155,5 @@
     
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>
