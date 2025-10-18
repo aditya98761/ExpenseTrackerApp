@@ -7,8 +7,11 @@ from wtforms import StringField, PasswordField, FloatField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
+from werkzeug.utils import secure_filename
 import os
 import urllib
+import uuid
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -140,24 +143,50 @@ connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
 container_name = "receipts" # Name of your container
 @app.route('/add_expense', methods=['GET', 'POST'])
 @login_required
+@app.route('/add_expense', methods=['GET', 'POST'])
+@login_required
 def add_expense():
     if request.method == 'POST':
         amount = float(request.form['amount'])
         description = request.form['description']
-
-        # All file handling and blob storage logic is removed.
-        # We simply create the expense without a receipt_url.
+        receipt_file = request.files.get('receipt')
+        receipt_url = None
+        # Check if a file was uploaded and has a filename
+        if receipt_file and receipt_file.filename:
+            try:
+                # Secure the original filename and get its extension
+                original_filename = secure_filename(receipt_file.filename)
+                file_extension = os.path.splitext(original_filename)[1]
+                # Generate a unique filename using UUID to prevent conflicts
+                unique_filename = str(uuid.uuid4()) + file_extension
+                # Get the connection string from your App Service configuration
+                connect_str = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+                container_name = "receipts" # IMPORTANT: Create a container with this name
+                if not connect_str:
+                    flash("Storage is not configured on the server.", "error")
+                    return redirect(url_for('dashboard'))
+                # Connect to blob service
+                blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+                blob_client = blob_service_client.get_blob_client(
+                    container=container_name, blob=unique_filename
+                )
+                # Upload the file and get its URL
+                blob_client.upload_blob(receipt_file)
+                receipt_url = blob_client.url
+            except Exception as e:
+                flash(f"An error occurred during file upload: {e}", "error")
+                return redirect(url_for('dashboard'))
+        # Create the expense with the receipt URL (which is None if no file was uploaded)
         new_expense = Expense(
             user_id=current_user.id,
             amount=amount,
-            description=description
-            # The receipt_url field is no longer set
+            description=description,
+            receipt_url=receipt_url
         )
         db.session.add(new_expense)
         db.session.commit()
         flash("Expense added successfully!")
         return redirect(url_for('dashboard'))
-
     return render_template('add_expense.html')
 
 @app.route('/update_expense/<int:expense_id>', methods=['GET', 'POST'])
@@ -204,4 +233,5 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
