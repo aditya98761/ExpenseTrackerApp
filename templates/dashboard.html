@@ -24,8 +24,16 @@
                 Logout
             </a>
         </div>
-    </nav>
-
+        </nav>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flashed-messages">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
     <div class="container">
         <!-- Stats Overview -->
         <div class="stats-grid">
@@ -146,4 +154,5 @@
 </body>
 
 </html>
+
 
